@@ -205,21 +205,24 @@ with col2:
 
 st.divider()
 
-# ---------- Optional AI Insights ----------
-st.subheader("🤖 AI Insight (optional)")
-st.caption("Ask GPT-4o-mini to explain your result. Requires an OpenAI API key.")
+# ---------- Optional AI Insights (Free via Groq) ----------
+st.subheader("🤖 AI Insight (Groq Free API)")
+st.caption("Uses Groq's open LLaMA 3 model — no OpenAI credits required!")
 
 prompt = st.text_area("Ask something like: 'Explain my profit in simple terms'")
 
 if st.button("Ask AI"):
-    api_key = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY"))
+    api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
     if not api_key:
-        st.error("No OpenAI API key found. Add one in Streamlit Secrets or your environment.")
+        st.error("⚠️ No Groq API key found. Add one in Streamlit Secrets.")
     else:
         try:
             from openai import OpenAI
-            client = OpenAI(api_key=api_key)
-            model_name = "gpt-4o-mini"  # Supported for temperature
+            client = OpenAI(
+                base_url="https://api.groq.com/openai/v1",
+                api_key=api_key
+            )
+
             context = f"""
             Coin: {coin1}
             Quantity: {qty}
@@ -229,15 +232,16 @@ if st.button("Ask AI"):
             """
             if compare and 'r2' in locals() and r2:
                 context += f"\nComparison coin: {coin2}\nComparison result: {r2}\n"
-            q = f"Given the context above, answer clearly and concisely: {prompt}"
+
+            q = f"Given the context above, answer clearly: {prompt}"
+
             resp = client.chat.completions.create(
-                model=model_name,
+                model="llama3-8b-8192",
                 messages=[{"role": "user", "content": context + '\n' + q}],
                 temperature=0.3,
             )
+
             st.success(resp.choices[0].message.content)
         except Exception as e:
-            if "insufficient_quota" in str(e):
-                st.error("⚠️ Your OpenAI API key has no remaining credits. Please check your [OpenAI usage dashboard](https://platform.openai.com/account/usage).")
-            else:
-                st.error(str(e))
+            st.error(f"Error: {e}")
+
