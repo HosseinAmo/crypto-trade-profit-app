@@ -236,7 +236,7 @@ if st.button("Ask AI"):
             q = f"Given the context above, answer clearly: {prompt}"
 
             resp = client.chat.completions.create(
-                model="llama3-8b-8192",
+                model="llama-3.2-3b-preview",
                 messages=[{"role": "user", "content": context + '\n' + q}],
                 temperature=0.3,
             )
