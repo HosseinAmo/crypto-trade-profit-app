@@ -1,5 +1,3 @@
-
-
 import os
 from datetime import date, timedelta
 from decimal import Decimal
@@ -7,8 +5,8 @@ import pandas as pd
 import streamlit as st
 
 # ---------- Streamlit setup ----------
-st.set_page_config(page_title="Crypto Trade Profit Calculator", page_icon="💹", layout="centered")
-st.title("💹 Crypto Trade Profit Calculator")
+st.set_page_config(page_title="Crypto Trade Profit Calculator", page_icon="", layout="centered")
+st.title("Crypto Trade Profit Calculator")
 st.caption("Calculate crypto trade profit/loss from historical data. Supports multiple coins and optional AI insights.")
 
 # ---------- Data loading (robust to capitalization) ----------
@@ -40,7 +38,7 @@ def load_data(csv_path: str) -> pd.DataFrame:
     if name_col is None: missing.append("Name (or Symbol/Ticker)")
 
     if missing:
-        st.error("⚠️ Your CSV file is missing these columns:")
+        st.error("WARNING: Your CSV file is missing these columns:")
         st.code("\n".join(missing))
         st.write("Found columns:", list(df.columns))
         st.stop()
@@ -79,32 +77,32 @@ def build_index(df: pd.DataFrame):
 # ---------- Load dataset ----------
 CSV_PATH = os.path.join(os.path.dirname(__file__), "CryptoCoins_Prices", "combined.csv")
 
-st.subheader("📊 Dataset Diagnostics")
+st.subheader("Dataset Diagnostics")
 st.write("Looking for file:", CSV_PATH)
 st.write("File exists?:", os.path.exists(CSV_PATH))
 
 if not os.path.exists(CSV_PATH):
-    st.error("❌ CSV file not found. Please ensure it's at `CryptoCoins_Prices/combined.csv` in your repo.")
+    st.error("ERROR: CSV file not found. Please ensure it's at `CryptoCoins_Prices/combined.csv` in your repo.")
     st.stop()
 
 try:
     df = load_data(CSV_PATH)
 except Exception as e:
-    st.error("❌ Failed to read your CSV file. See details below:")
+    st.error("ERROR: Failed to read your CSV file. See details below:")
     st.exception(e)
     st.stop()
 
 if df.empty:
-    st.warning("⚠️ CSV loaded but contains no valid data after cleaning. Check column names and formatting.")
+    st.warning("WARNING: CSV loaded but contains no valid data after cleaning. Check column names and formatting.")
     st.stop()
 
-st.success(f"✅ Loaded {len(df):,} rows across {df['Name'].nunique()} coins.")
+st.success(f"SUCCESS: Loaded {len(df):,} rows across {df['Name'].nunique()} coins.")
 st.dataframe(df.head(5), use_container_width=True)
 
 data = build_index(df)
 tickers = sorted(data.keys())
 if not tickers:
-    st.error("❌ No tickers found after grouping by 'Name' column.")
+    st.error("ERROR: No tickers found after grouping by 'Name' column.")
     st.stop()
 
 # ---------- Date bounds ----------
@@ -114,7 +112,7 @@ default_buy = max(min_d, (max_d - timedelta(days=14)))
 
 # ---------- Sidebar inputs ----------
 with st.sidebar:
-    st.header("⚙️ Trade Inputs")
+    st.header("Trade Inputs")
     default_primary = tickers.index("BTC") if "BTC" in tickers else 0
     coin1 = st.selectbox("Primary coin", tickers, index=default_primary)
     qty = st.number_input("Quantity", min_value=0.00000001, value=1.0, step=0.01, format="%.8f")
@@ -175,7 +173,7 @@ def result_block(ticker, qty, d_buy, d_sell):
 # ---------- Main results ----------
 col1, col2 = st.columns(2)
 with col1:
-    st.subheader(f"📈 Primary: {coin1}")
+    st.subheader(f"Primary: {coin1}")
     r1 = result_block(coin1, qty, d_buy, d_sell)
     if r1:
         st.metric("Purchase total", money(r1["buy_total"]))
@@ -190,7 +188,7 @@ with col1:
 
 with col2:
     if compare:
-        st.subheader(f"📉 Secondary: {coin2}")
+        st.subheader(f"Secondary: {coin2}")
         r2 = result_block(coin2, qty, d_buy, d_sell)
         if r2:
             st.metric("Purchase total", money(r2["buy_total"]))
@@ -206,7 +204,7 @@ with col2:
 st.divider()
 
 # ---------- Optional AI Insights (Free via Groq) ----------
-st.subheader("🤖 AI Insight (Groq Free API)")
+st.subheader("AI Insight (Groq Free API)")
 st.caption("Uses Groq's open LLaMA 3 model — no OpenAI credits required!")
 
 prompt = st.text_area("Ask something like: 'Explain my profit in simple terms'")
@@ -214,7 +212,7 @@ prompt = st.text_area("Ask something like: 'Explain my profit in simple terms'")
 if st.button("Ask AI"):
     api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
     if not api_key:
-        st.error("⚠️ No Groq API key found. Add one in Streamlit Secrets.")
+        st.error("WARNING: No Groq API key found. Add one in Streamlit Secrets.")
     else:
         try:
             from openai import OpenAI
@@ -244,4 +242,3 @@ if st.button("Ask AI"):
             st.success(resp.choices[0].message.content)
         except Exception as e:
             st.error(f"Error: {e}")
-
