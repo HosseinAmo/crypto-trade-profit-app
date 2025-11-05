@@ -9,7 +9,7 @@ import streamlit as st
 # ---------- Streamlit setup ----------
 st.set_page_config(page_title="Crypto Trade Profit Calculator", page_icon="💹", layout="centered")
 st.title("💹 Crypto Trade Profit Calculator")
-st.caption("Calculate crypto trade profit/loss from historical data. Supports multiple coins and optional AI analysis.")
+st.caption("Calculate crypto trade profit/loss from historical data. Supports multiple coins and optional AI insights.")
 
 # ---------- Data loading (robust to capitalization) ----------
 @st.cache_data
@@ -207,7 +207,7 @@ st.divider()
 
 # ---------- Optional AI Insights ----------
 st.subheader("🤖 AI Insight (optional)")
-st.caption("Ask GPT-5 to explain your result (requires an OpenAI API key).")
+st.caption("Ask GPT-4o-mini to explain your result. Requires an OpenAI API key.")
 
 prompt = st.text_area("Ask something like: 'Explain my profit in simple terms'")
 
@@ -219,6 +219,7 @@ if st.button("Ask AI"):
         try:
             from openai import OpenAI
             client = OpenAI(api_key=api_key)
+            model_name = "gpt-4o-mini"  # Supported for temperature
             context = f"""
             Coin: {coin1}
             Quantity: {qty}
@@ -228,12 +229,15 @@ if st.button("Ask AI"):
             """
             if compare and 'r2' in locals() and r2:
                 context += f"\nComparison coin: {coin2}\nComparison result: {r2}\n"
-            q = f"Given the context above, answer clearly: {prompt}"
+            q = f"Given the context above, answer clearly and concisely: {prompt}"
             resp = client.chat.completions.create(
-                model="gpt-5",
+                model=model_name,
                 messages=[{"role": "user", "content": context + '\n' + q}],
                 temperature=0.3,
             )
             st.success(resp.choices[0].message.content)
         except Exception as e:
-            st.error(str(e))
+            if "insufficient_quota" in str(e):
+                st.error("⚠️ Your OpenAI API key has no remaining credits. Please check your [OpenAI usage dashboard](https://platform.openai.com/account/usage).")
+            else:
+                st.error(str(e))
