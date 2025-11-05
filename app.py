@@ -1,6 +1,4 @@
-# ===========================================
-# 💹 Crypto Trade Profit Calculator (Streamlit)
-# ===========================================
+
 
 import os
 from datetime import date, timedelta
